@@ -1,6 +1,6 @@
 from sqlalchemy import Boolean, Column, Integer, String, DATETIME
 from datetime import datetime
-
+from config import Tashkent_tz
 from database import Base
 
 
@@ -13,5 +13,5 @@ class AssignmentTable(Base):
     priority = Column(String(24))
     the_nadir = Column(String(64))
     is_complete = Column(Boolean,default=False)
-    created_at  = Column(DATETIME,nullable=False)
-    updated_at = Column(DATETIME, onupdate=datetime.utcnow())
+    created_at  = Column(DATETIME,nullable=False,default=datetime.now(tz=Tashkent_tz))
+    updated_at = Column(DATETIME, onupdate=datetime.now(tz=Tashkent_tz))
