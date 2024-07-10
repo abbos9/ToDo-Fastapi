@@ -1,5 +1,4 @@
 # imports
-from ctypes import ArgumentError
 from datetime import datetime
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, status
 from config import Tashkent_tz
@@ -7,7 +6,6 @@ from models import AssignmentTable
 from database import engine, SessionLocal
 import models, schemas, crud
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import ArgumentError
 
 
 # views
