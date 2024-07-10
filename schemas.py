@@ -8,7 +8,6 @@ class CrudAssignmentSchema(BaseModel):
     description:str
     priority:str
     the_nadir:str
-    is_complete:bool
     created_at:datetime = datetime.now(tz=Tashkent_tz)
     updated_at:datetime = datetime.now(tz=Tashkent_tz)
     class Config:
