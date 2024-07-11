@@ -1,18 +1,21 @@
 # imports
 from datetime import datetime
+from typing import Annotated
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, status
 from config import Tashkent_tz
-from models import AssignmentTable
+from models import AssignmentTable, Users
 from database import engine, SessionLocal
 import models, schemas, crud
 from sqlalchemy.orm import Session
-
+import auth
+from auth import get_current_user
 
 # views
 models.Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI(title="Todo Project")
+app.include_router(auth.router)
 
 @app.middleware("http")
 async def db_session_middleware(request:Request, call_next):
@@ -27,18 +30,22 @@ async def db_session_middleware(request:Request, call_next):
 def get_db(request:Request):
     return request.state.db
 
+user_depency = Annotated[dict, Depends(get_current_user)]
+db_dependency = Annotated[Session, Depends(get_db)]
 
-@app.get("/", response_model=list[schemas.ResponseAssignmentSchema])
-async def get_assignment(db:Session=Depends(get_db)):
+
+
+@app.get("/", response_model=list[schemas.ResponseAssignmentSchema],status_code=status.HTTP_200_OK)
+async def get_assignment(db:db_dependency):
     db_assignment = crud.get_assignment(db=db)
     return db_assignment
 
-@app.post("/", response_model=schemas.CrudAssignmentSchema)
-async def create_assignment(assignment:schemas.CrudAssignmentSchema,db:Session=Depends(get_db)):
+@app.post("/", response_model=schemas.CrudAssignmentSchema,status_code=status.HTTP_201_CREATED)
+async def create_assignment(assignment:schemas.CrudAssignmentSchema,db:db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
     return crud.create_assignment(db=db, assignment=assignment)
 
 @app.delete("/assignment/{assignment_id}", response_model=schemas.CrudAssignmentSchema)
-def delete_assignment(assignment_id: int, db: Session = Depends(get_db)):
+def delete_assignment(assignment_id: int, db: db_dependency):
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     print(db_assignment)
     if db_assignment:
@@ -49,8 +56,8 @@ def delete_assignment(assignment_id: int, db: Session = Depends(get_db)):
     return {"message": "Assignment successfully delete"}
 
 
-@app.put("/assignment/{assignment_id}", response_model=schemas.UpdateAssignmentSchema)
-def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSchema, db: Session = Depends(get_db)):
+@app.put("/assignment/{assignment_id}", response_model=schemas.UpdateAssignmentSchema,status_code=status.HTTP_201_CREATED)
+def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSchema, db: db_dependency):
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     if not db_assignment:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -63,3 +70,10 @@ def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSc
     db.commit()
     db.refresh(db_assignment)
     return db_assignment
+
+
+@app.get("/users/me/", response_model=schemas.UserResponseSchema)
+async def read_users_me(
+    current_user: Annotated[Users, Depends(get_current_user)],
+):
+    return current_user

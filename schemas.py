@@ -36,3 +36,23 @@ class UpdateAssignmentSchema(BaseModel):
 
     class Config:
         orm_mode=True
+
+
+class CreateUserSchema(BaseModel):
+    username: str
+    password: str
+
+    class Config:
+        orm_mode=True
+
+
+class TokenSchema(BaseModel):
+    access_token:str
+    token_type:str
+
+class UserResponseSchema(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        orm_mode = True

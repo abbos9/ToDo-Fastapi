@@ -15,3 +15,12 @@ class AssignmentTable(Base):
     is_complete = Column(Boolean,default=False)
     created_at  = Column(DATETIME,nullable=False,default=datetime.now(tz=Tashkent_tz))
     updated_at = Column(DATETIME, onupdate=datetime.now(tz=Tashkent_tz))
+
+
+class Users(Base):
+    __tablename__ = "Users"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    is_active = Column(Boolean, default=True)
