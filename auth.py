@@ -33,19 +33,16 @@ def authenticate_user(db: Session, username: str, password: str):
         return False
     return db_user
 
-
-async def get_current_user(token:Annotated[str, Depends(oauth2_bearer)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user.")
-        
-        return {"username": username, "id": user_id}
-    except JWTError:
+        return {"id": user_id, "username": username}
+    except JWTError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
-
 
 # end
 
@@ -71,6 +68,9 @@ async def create_user(db: db_dependency, create_user_schema: CreateUserSchema):
     create_user_model = Users(
         username=create_user_schema.username,
         hashed_password=bcrypt_context.hash(create_user_schema.password),
+        first_name=create_user_schema.first_name,
+        last_name=create_user_schema.last_name,
+        phone_num=create_user_schema.phone_num
     )
     db.add(create_user_model)
     db.commit()

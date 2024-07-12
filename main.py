@@ -35,17 +35,19 @@ db_dependency = Annotated[Session, Depends(get_db)]
 
 
 
-@app.get("/", response_model=list[schemas.ResponseAssignmentSchema],status_code=status.HTTP_200_OK)
-async def get_assignment(db:db_dependency):
-    db_assignment = crud.get_assignment(db=db)
-    return db_assignment
+@app.get("/", response_model=list[schemas.ResponseAssignmentSchema], status_code=status.HTTP_200_OK)
+async def get_assignments(db: Session = Depends(get_db)):
+    db_assignments = crud.get_assignment(db=db)
+    return db_assignments
+
 
 @app.post("/", response_model=schemas.CrudAssignmentSchema,status_code=status.HTTP_201_CREATED)
 async def create_assignment(assignment:schemas.CrudAssignmentSchema,db:db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
-    return crud.create_assignment(db=db, assignment=assignment)
+    return crud.create_assignment(db=db, assignment=assignment, owner_id=current_user["id"])
+
 
 @app.delete("/assignment/{assignment_id}", response_model=schemas.CrudAssignmentSchema)
-def delete_assignment(assignment_id: int, db: db_dependency):
+def delete_assignment(assignment_id: int, db: db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     print(db_assignment)
     if db_assignment:
@@ -57,7 +59,7 @@ def delete_assignment(assignment_id: int, db: db_dependency):
 
 
 @app.put("/assignment/{assignment_id}", response_model=schemas.UpdateAssignmentSchema,status_code=status.HTTP_201_CREATED)
-def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSchema, db: db_dependency):
+def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSchema, db: db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     if not db_assignment:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -70,10 +72,3 @@ def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSc
     db.commit()
     db.refresh(db_assignment)
     return db_assignment
-
-
-@app.get("/users/me/", response_model=schemas.UserResponseSchema)
-async def read_users_me(
-    current_user: Annotated[Users, Depends(get_current_user)],
-):
-    return current_user
