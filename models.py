@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, Integer, String, DATETIME, ForeignKey
 from datetime import datetime
 from config import Tashkent_tz
 from database import Base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 
 
 class Users(Base):
@@ -15,10 +15,19 @@ class Users(Base):
     phone_num = Column(String(36))
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    role = Column(String(24))
+
     created_at  = Column(DATETIME,nullable=False,default=datetime.now(tz=Tashkent_tz))
     updated_at = Column(DATETIME, onupdate=datetime.now(tz=Tashkent_tz))
 
     assignments = relationship("AssignmentTable", back_populates="owner")
+
+    @validates('role')
+    def validate_role(self, key, value):
+        valid_roles = ["PM", "developer", "employee"]
+        if value not in valid_roles:
+            raise ValueError('Role must be one of: {}'.format(", ".join(valid_roles)))
+        return value
 
 
 class AssignmentTable(Base):

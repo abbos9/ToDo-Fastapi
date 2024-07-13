@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from datetime import datetime, timedelta
 from typing import Annotated
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -64,12 +64,15 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(db: db_dependency, create_user_schema: CreateUserSchema):
+async def create_user(db: db_dependency,create_user_schema: CreateUserSchema):
+    if db.query(Users).filter(Users.username == create_user_schema.username).first():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
     create_user_model = Users(
         username=create_user_schema.username,
         hashed_password=bcrypt_context.hash(create_user_schema.password),
         first_name=create_user_schema.first_name,
         last_name=create_user_schema.last_name,
+        role=create_user_schema.role,
         phone_num=create_user_schema.phone_num
     )
     db.add(create_user_model)

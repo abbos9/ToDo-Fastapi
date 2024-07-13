@@ -46,7 +46,7 @@ async def create_assignment(assignment:schemas.CrudAssignmentSchema,db:db_depend
     return crud.create_assignment(db=db, assignment=assignment, owner_id=current_user["id"])
 
 
-@app.delete("/assignment/{assignment_id}", response_model=schemas.CrudAssignmentSchema)
+@app.delete("/assignment/{assignment_id}", response_model=schemas.CrudAssignmentSchema, status_code=status.HTTP_404_NOT_FOUND)
 def delete_assignment(assignment_id: int, db: db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     print(db_assignment)

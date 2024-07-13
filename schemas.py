@@ -1,4 +1,4 @@
-from pydantic import  BaseModel
+from pydantic import  BaseModel, Field
 from datetime import datetime
 
 from config import Tashkent_tz
@@ -9,6 +9,7 @@ class CreateUserSchema(BaseModel):
     last_name: str
     password: str
     phone_num:str
+    role:str = Field(...,examples=["PM/developer/employee"], pattern="^(PM|developer|employee)$")
 
     class Config:
         orm_mode=True
