@@ -22,8 +22,8 @@ class TokenSchema(BaseModel):
 class UserResponseSchema(BaseModel):
     id: int
     username: str
-    # first_name:str
-    # last_name:str
+    first_name:str
+    last_name:str
 
     class Config:
         orm_mode = True
