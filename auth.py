@@ -17,8 +17,25 @@ from schemas import CreateUserSchema, TokenSchema, UserResponseSchema
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 
+router = APIRouter(
+    prefix="/auth",
+    tags=['auth']
+)
 
-# crud
+
+# dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+db_dependency = Annotated[Session, Depends(get_db)]
+
+
+# crud/mechanic
 def create_access_token(username: str, user_id: int, first_name: str, last_name: str, expires_delta: timedelta):
     encode = {
         "sub": username,
@@ -36,23 +53,28 @@ def authenticate_user(db: Session, username: str, password: str):
         return False
     return db_user
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
+async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
-        first_name: str = payload.get("first_name")
-        last_name: str = payload.get("last_name")
         if username is None or user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate user."
             )
+        db_user = db.query(Users).filter(Users.id == user_id).first()
+        if db_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate user."
+            )
         return {
-            "id": user_id,
-            "username": username,
-            "first_name": first_name,
-            "last_name": last_name
+            "id": db_user.id,
+            "username": db_user.username,
+            "first_name": db_user.first_name,
+            "last_name": db_user.last_name,
+            "role": db_user.role
         }
     except JWTError:
         raise HTTPException(
@@ -60,25 +82,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
             detail="Could not validate user"
         )
 
-
 # end
-
-router = APIRouter(
-    prefix="/auth",
-    tags=['auth']
-)
-
-
-# dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-db_dependency = Annotated[Session, Depends(get_db)]
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency,create_user_schema: CreateUserSchema):
@@ -108,4 +112,3 @@ async def login_by_access_token(db: db_dependency, data: Annotated[OAuth2Passwor
         'access_token': token,
         'token_type': 'bearer'
     }
-

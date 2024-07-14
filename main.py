@@ -43,11 +43,15 @@ async def get_assignments(db: Session = Depends(get_db)):
 
 @app.post("/", response_model=schemas.CrudAssignmentSchema,status_code=status.HTTP_201_CREATED)
 async def create_assignment(assignment:schemas.CrudAssignmentSchema,db:db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
+    if current_user["role"] != "PM":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to perform this action.")
     return crud.create_assignment(db=db, assignment=assignment, owner_id=current_user["id"])
 
 
 @app.delete("/assignment/{assignment_id}", response_model=schemas.CrudAssignmentSchema, status_code=status.HTTP_404_NOT_FOUND)
 def delete_assignment(assignment_id: int, db: db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
+    if current_user["role"] != "PM":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to perform this action.")
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     print(db_assignment)
     if db_assignment:
@@ -60,6 +64,8 @@ def delete_assignment(assignment_id: int, db: db_dependency,current_user: Annota
 
 @app.put("/assignment/{assignment_id}", response_model=schemas.UpdateAssignmentSchema,status_code=status.HTTP_201_CREATED)
 def update_assignment(assignment_id: int, assignment: schemas.UpdateAssignmentSchema, db: db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
+    if current_user["role"] not in ["employee", "developer", "PM"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to perform this action.")
     db_assignment = db.query(AssignmentTable).filter(AssignmentTable.id == assignment_id).first()
     if not db_assignment:
         raise HTTPException(status_code=404, detail="Item not found")
