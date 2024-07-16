@@ -40,6 +40,13 @@ async def get_assignments(db: Session = Depends(get_db)):
     db_assignments = crud.get_assignment(db=db)
     return db_assignments
 
+@app.get("assignment/{assignment_id}", response_model=schemas.ResponseAssignmentSchema)
+async def get_assignment(assignment_id:int, db:Session= Depends(db_dependency)):
+    assignment = db.query(models.AssignmentTable).filter(models.AssignmentTable.id == assignment_id).first()
+    if assignment is not None:
+        return assignment
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Not found")
+
 
 @app.post("/", response_model=schemas.CrudAssignmentSchema,status_code=status.HTTP_201_CREATED)
 async def create_assignment(assignment:schemas.CrudAssignmentSchema,db:db_dependency,current_user: Annotated[Users, Depends(get_current_user)]):
