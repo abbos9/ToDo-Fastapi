@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import  BaseModel, Field
 from datetime import datetime
 
@@ -8,8 +9,8 @@ class CreateUserSchema(BaseModel):
     first_name:str
     last_name: str
     password: str
-    phone_num:str
-    role:str = Field(...,examples=["PM/developer/employee"], pattern="^(PM|developer|employee)$")
+    phone_num:str = Field(examples=['+998(90)145-44-77'], pattern=r'^\+\d{3}\(\d{2}\)\d{3}-\d{2}-\d{2}$')
+    role:str = Field(examples=["PM/developer/employee"], pattern="^(PM|developer|employee)$")
 
     class Config:
         orm_mode=True
@@ -32,7 +33,6 @@ class CrudAssignmentSchema(BaseModel):
     title: str
     description:str
     priority:str
-    the_nadir:str
     created_at:datetime = datetime.now(tz=Tashkent_tz)
     updated_at:datetime = datetime.now(tz=Tashkent_tz)
     class Config:
@@ -43,7 +43,6 @@ class ResponseAssignmentSchema(BaseModel):
     title: str
     description: str
     priority: str
-    the_nadir: str
     is_complete: bool
     owner: UserResponseSchema
 
@@ -57,7 +56,6 @@ class UpdateAssignmentSchema(BaseModel):
     title: str
     description:str
     priority:str
-    the_nadir:str
     is_complete:bool
     updated_at:datetime = datetime.now(tz=Tashkent_tz)
 
